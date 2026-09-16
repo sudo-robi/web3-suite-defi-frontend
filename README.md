@@ -354,6 +354,264 @@ The frontend ships with these default token configurations:
 
 ---
 
+## Components Reference
+
+### Header (`src/components/Header.tsx`)
+
+The primary navigation bar with wallet connection.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| — | — | Uses `useLocation()` for active route detection |
+
+**Features**:
+- Sticky positioning with backdrop blur
+- Responsive: logo and nav hidden on mobile, visible on `md:`
+- Active route highlighted with Stellar blue background
+- Wallet button integrated directly (connect/disconnect/loading states)
+- Address truncated: `GCKFBE...S4D5QF`
+
+### Navbar (`src/components/Navbar.tsx`)
+
+Alternative navigation component using `WalletButton` child.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| — | — | Uses `useLocation()` and renders `WalletButton` |
+
+**Features**:
+- Same layout as Header but delegates wallet logic to `WalletButton`
+- Useful for layouts where wallet placement varies
+
+### WalletButton (`src/components/WalletButton.tsx`)
+
+Standalone wallet connect/disconnect button.
+
+| Prop | Type | Description |
+|------|------|-------------|
+| — | — | Uses `useWallet()` hook for state |
+
+**States**:
+1. **Disconnected**: Shows "Connect Wallet" with `Wallet` icon
+2. **Loading**: Shows spinner with "Connecting..."
+3. **Connected**: Shows truncated address + "Disconnect" button
+4. **Error**: Shows red error text below button
+
+### TokenInput (`src/components/TokenInput.tsx`)
+
+Reusable token amount input with dropdown token selector.
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `label` | `string` | Yes | Label above input (e.g., "You pay") |
+| `value` | `string` | Yes | Current input value |
+| `onChange` | `(value: string) => void` | Yes | Value change callback |
+| `selectedToken` | `Token` | Yes | Currently selected token |
+| `onTokenSelect` | `(token: Token) => void` | Yes | Token selection callback |
+| `tokens` | `Token[]` | Yes | Available tokens for dropdown |
+| `balance` | `string` | No | Token balance to display |
+| `readOnly` | `boolean` | No | Disable input editing |
+| `disabled` | `boolean` | No | Disable entire component |
+
+**Token Interface**:
+```typescript
+interface Token {
+  symbol: string;    // e.g., "XLM"
+  name: string;      // e.g., "Stellar Lumens"
+  address: string;   // Stellar contract address
+  icon?: string;     // Optional icon URL
+}
+```
+
+**Features**:
+- Decimal input validation (regex: `/^\d*\.?\d*$/`)
+- Dropdown with click-outside-to-close behavior
+- Selected token highlighted with Stellar blue
+- Keyboard-friendly: `inputMode="decimal"` for mobile
+
+---
+
+## Hooks Reference
+
+### useWallet (`src/hooks/useWallet.ts`)
+
+Manages Freighter wallet connection state.
+
+**Returns**:
+```typescript
+{
+  isConnected: boolean;        // Whether wallet is connected
+  address: string | null;      // Connected wallet address
+  network: string | null;      // Stellar network (TESTNET, MAINNET)
+  isLoading: boolean;          // Connection in progress
+  error: string | null;        // Error message
+  connect: () => Promise<void>;    // Initiate connection
+  disconnect: () => void;          // Disconnect wallet
+  signTransaction: (xdr: string) => Promise<string | null>;  // Sign XDR
+}
+```
+
+**Behavior**:
+- Auto-checks Freighter connection on mount
+- Requests access permission if not already allowed
+- Returns truncated address for display
+- `signTransaction` signs XDR with the connected account
+
+### useSwapQuote (`src/hooks/useSwapQuote.ts`)
+
+Fetches swap quotes from the backend API.
+
+**Returns**:
+```typescript
+{
+  quote: SwapQuote | null;     // Current quote or null
+  isLoading: boolean;          // Fetch in progress
+  error: string | null;        // Error message
+  fetchQuote: (tokenIn, tokenOut, amountIn, aToB) => Promise<void>;
+}
+```
+
+**SwapQuote Interface**:
+```typescript
+interface SwapQuote {
+  amountIn: string;       // Input amount
+  amountOut: string;      // Calculated output
+  fee: string;            // Trading fee
+  priceImpactPct: string; // Price impact in BPS
+}
+```
+
+### useLendingRates (`src/hooks/useLendingRates.ts`)
+
+Fetches lending rates with automatic 30-second polling.
+
+**Returns**:
+```typescript
+{
+  rates: LendingRates | null;  // Current rates
+  isLoading: boolean;          // Fetch in progress
+  error: string | null;        // Error message
+  refresh: () => Promise<void>; // Manual refresh
+}
+```
+
+**LendingRates Interface**:
+```typescript
+interface LendingRates {
+  supplyApy: string;    // Supply APY in BPS
+  borrowApy: string;    // Borrow APY in BPS
+  utilization: string;  // Utilization in BPS
+}
+```
+
+**Behavior**:
+- Fetches on mount
+- Polls every 30 seconds
+- Cleans up interval on unmount
+- Manual `refresh()` for on-demand updates
+
+---
+
+## API Service Layer
+
+### Base Functions (`src/services/api.ts`)
+
+```typescript
+apiGet<T>(path: string): Promise<T>     // GET request with error handling
+apiPost<T>(path: string, body: unknown): Promise<T>  // POST with JSON body
+```
+
+### swapApi
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `getQuote(params)` | `GET /api/swap/quote?...` | Fetch swap quote |
+| `execute(body)` | `POST /api/swap/execute` | Execute swap transaction |
+| `getPool()` | `GET /api/swap/pool` | Get pool information |
+
+### lendingApi
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `getPool()` | `GET /api/lending/pool` | Get lending pool info |
+| `getRates()` | `GET /api/lending/rates` | Get current rates |
+| `supply(body)` | `POST /api/lending/supply` | Supply assets |
+| `borrow(body)` | `POST /api/lending/borrow` | Borrow assets |
+| `getPosition(address)` | `GET /api/lending/position/:address` | Get user position |
+
+---
+
+## Customization
+
+### Adding a New Token
+
+Edit `src/pages/Swap.tsx` (and other pages):
+
+```typescript
+const TOKENS: Token[] = [
+  // ... existing tokens
+  {
+    symbol: "NEW",
+    name: "New Token",
+    address: "C...CONTRACT_ADDRESS",
+  },
+];
+```
+
+### Adding a New Page
+
+1. Create `src/pages/NewPage.tsx`
+2. Add route in `src/App.tsx`:
+   ```tsx
+   <Route path="/new" element={<NewPage />} />
+   ```
+3. Add nav item in `src/components/Header.tsx`:
+   ```typescript
+   { path: "/new", label: "New", icon: YourIcon }
+   ```
+
+### Modifying the Theme
+
+Edit `src/index.css` to customize:
+
+```css
+@layer components {
+  .card {
+    @apply rounded-2xl border border-gray-800 bg-gray-900/50 p-6;
+  }
+  .btn-primary {
+    @apply rounded-xl bg-stellar-600 px-6 py-3 font-semibold;
+  }
+}
+```
+
+Or modify Tailwind config for custom colors:
+
+```typescript
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        stellar: {
+          400: '#3B82F6',
+          500: '#0C8CE9',
+          600: '#0A7BD4',
+        },
+        defi: {
+          green: '#00D4AA',
+          red: '#EF4444',
+          yellow: '#F59E0B',
+          purple: '#8B5CF6',
+        },
+      },
+    },
+  },
+};
+```
+
+---
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
