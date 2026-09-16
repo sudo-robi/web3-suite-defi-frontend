@@ -1,339 +1,428 @@
 # Web3 Suite — DeFi Frontend
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Issues](https://img.shields.io/github/issues/web3-suite/defi-frontend)](https://github.com/web3-suite/defi-frontend/issues)
-[![Stars](https://img.shields.io/github/stars/web3-suite/defi-frontend)](https://github.com/web3-suite/defi-frontend/stargazers)
-[![React](https://img.shields.io/badge/React-18-61dafb)](https://react.dev)
-[![Tailwind](https://img.shields.io/badge/Tailwind-3.4-38bdf8)](https://tailwindcss.com)
+> Modern React + Vite + Tailwind frontend for token swaps, liquidity management, and lending on the Stellar network with Freighter wallet integration.
 
-> React-based DeFi interface for Stellar/Soroban — token swaps, liquidity provision, and lending/borrowing with Freighter wallet integration.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Issues](https://img.shields.io/github/issues/sudo-robi/web3-suite-defi-frontend)](https://github.com/sudo-robi/web3-suite-defi-frontend/issues)
+[![Stars](https://img.shields.io/github/stars/sudo-robi/web3-suite-defi-frontend)](https://github.com/sudo-robi/web3-suite-defi-frontend/stargazers)
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Screenshots](#screenshots)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Running](#running)
+- [Building](#building)
+- [Testing](#testing)
+- [Environment Variables](#environment-variables)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
 ## Overview
 
-A modern, dark-themed DeFi frontend built with React, Vite, and Tailwind CSS. Connects to the Stellar testnet via Freighter wallet and interacts with Soroban smart contracts through the backend API.
+**Web3 Suite DeFi Frontend** is a single-page React application providing a polished, responsive interface for interacting with Stellar/Soroban DeFi protocols. It supports token swaps via constant-product AMM, concentrated liquidity position management, and decentralized lending/borrowing — all with native Freighter wallet integration.
 
-### Features
+### Why This Exists
 
-- **Token Swap** — Real-time quotes, slippage settings, price impact warnings
-- **Liquidity Pools** — View pools, add/remove concentrated liquidity positions
-- **Lending Dashboard** — Supply assets, borrow against collateral, health factor monitoring
-- **Wallet Integration** — Freighter browser extension connection, transaction signing
-- **Responsive Design** — Mobile-first, works on all screen sizes
-- **Dark Theme** — Custom Stellar/DeFi color palette
+DeFi protocols need accessible, trustworthy frontends. This application provides a clean, dark-themed UI that makes complex DeFi operations (swaps, liquidity provision, lending) intuitive for both new and experienced Stellar users. It integrates directly with Freighter for seamless wallet signing.
 
----
+### Target Audience
 
-## Screenshots
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  [Swap Page]                                            │
-│                                                         │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │  You pay                                         │   │
-│  │  ┌──────────────────────┐  ┌──────────────┐    │   │
-│  │  │ 0.0                  │  │ XLM        ▼ │    │   │
-│  │  └──────────────────────┘  └──────────────┘    │   │
-│  │                    ↕                             │   │
-│  │  You receive                                     │   │
-│  │  ┌──────────────────────┐  ┌──────────────┐    │   │
-│  │  │ 0.0                  │  │ USDC       ▼ │    │   │
-│  │  └──────────────────────┘  └──────────────┘    │   │
-│  │                                                 │   │
-│  │  Price Impact: 0.01%    Fee: 0.30%             │   │
-│  │                                                 │   │
-│  │  ┌─────────────────────────────────────────┐    │   │
-│  │  │              Swap                       │    │   │
-│  │  └─────────────────────────────────────────┘    │   │
-│  └─────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## Tech Stack
-
-| Category | Technology |
-|----------|-----------|
-| Framework | React 18 |
-| Build Tool | Vite 5 |
-| Language | TypeScript 5.3 |
-| Styling | Tailwind CSS 3.4 |
-| Routing | React Router 6 |
-| Wallet | Freighter API 3.0 |
-| Icons | Lucide React |
-| Utilities | clsx |
+- **Stellar users** looking to swap tokens or provide liquidity
+- **DeFi liquidity providers** managing concentrated positions
+- **Borrowers** accessing decentralized lending against collateral
+- **Developers** building on Stellar/Soroban DeFi primitives
 
 ---
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                    Browser                                │
-│                                                          │
-│  ┌────────────────────────────────────────────────────┐  │
-│  │                 React App                           │  │
-│  │                                                     │  │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐ │  │
-│  │  │  Pages   │  │Components│  │     Hooks        │ │  │
-│  │  │          │  │          │  │                   │ │  │
-│  │  │  Swap    │  │  Header  │  │  useWallet       │ │  │
-│  │  │  Liq.    │  │  Token   │  │  useSwapQuote    │ │  │
-│  │  │  Lend    │  │  Input   │  │  useLendingRates │ │  │
-│  │  └────┬─────┘  └──────────┘  └────────┬─────────┘ │  │
-│  │       │                                │            │  │
-│  │  ┌────▼────────────────────────────────▼─────────┐ │  │
-│  │  │              Services Layer                    │ │  │
-│  │  │  api.ts  →  fetch("/api/swap/quote")          │ │  │
-│  │  └──────────────────┬────────────────────────────┘ │  │
-│  └─────────────────────┼──────────────────────────────┘  │
-│                        │                                  │
-│  ┌─────────────────────▼──────────────────────────────┐  │
-│  │              Freighter Extension                     │  │
-│  │  signTransaction()  ·  getAddress()  ·  getNetwork()│  │
-│  └────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────┘
-                        │
-              ┌─────────▼─────────┐
-              │   Backend API     │
-              │   (localhost:3001)│
-              └───────────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                        Browser Runtime                           │
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐    │
+│  │                  React Application                       │    │
+│  │                                                          │    │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐              │    │
+│  │  │   Swap    │  │ Liquidity│  │ Lending  │  Pages       │    │
+│  │  └────┬─────┘  └────┬─────┘  └────┬─────┘              │    │
+│  │       │              │             │                     │    │
+│  │  ┌────▼──────────────▼─────────────▼─────┐              │    │
+│  │  │              Components                │              │    │
+│  │  │  Header · Navbar · TokenInput ·        │              │    │
+│  │  │  WalletButton                          │              │    │
+│  │  └────────────────┬──────────────────────┘              │    │
+│  │                   │                                      │    │
+│  │  ┌────────────────▼──────────────────────┐              │    │
+│  │  │               Hooks                    │              │    │
+│  │  │  useSwapQuote · useLendingRates ·     │              │    │
+│  │  │  useWallet                             │              │    │
+│  │  └────────────────┬──────────────────────┘              │    │
+│  │                   │                                      │    │
+│  │  ┌────────────────▼──────────────────────┐              │    │
+│  │  │            API Service                 │              │    │
+│  │  │  swapApi · lendingApi · apiGet/apiPost │              │    │
+│  │  └────────────────┬──────────────────────┘              │    │
+│  │                   │                                      │    │
+│  └───────────────────┼──────────────────────────────────────┘    │
+│                      │                                           │
+│  ┌───────────────────▼──────────────────────────────────────┐    │
+│  │              Freighter Wallet Extension                   │    │
+│  │  connect() · getAddress() · signTransaction()            │    │
+│  └──────────────────────────────────────────────────────────┘    │
+│                                                                  │
+├──────────────────────────────────────────────────────────────────┤
+│  HTTP Proxy (Vite dev) / API URL (production)                    │
+│  /api/* → http://localhost:3001                                  │
+└─────────────────────┬────────────────────────────────────────────┘
+                      │
+                      ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                Backend API (Express/TypeScript)                  │
+│                http://localhost:3001                              │
+└──────────────────────────────────────────────────────────────────┘
 ```
+
+### Component Hierarchy
+
+```
+App
+├── Header
+│   ├── Logo (Link to /)
+│   ├── Nav Items (Swap, Liquidity, Lending)
+│   └── WalletButton
+│       ├── Connect (Freighter)
+│       ├── Connected (Address + Disconnect)
+│       └── Loading State
+│
+├── Routes
+│   ├── /swap → Swap
+│   │   ├── TokenInput (from)
+│   │   ├── TokenInput (to)
+│   │   ├── SlippageSettings
+│   │   ├── QuoteDetails
+│   │   └── PoolInfo
+│   │
+│   ├── /liquidity → Liquidity
+│   │   ├── Stats Cards (TVL, Fees, Positions)
+│   │   ├── PositionsList
+│   │   └── AddLiquidityForm
+│   │
+│   └── /lending → Lending
+│       ├── RateCards (Supply APY, Borrow APY, Utilization)
+│       ├── SupplyPanel
+│       └── BorrowPanel
+│
+└── Footer
+```
+
+---
+
+## Features
+
+1. **Freighter Wallet Integration** — Connect/disconnect with Freighter browser extension
+2. **Token Swap Interface** — Swap tokens via constant-product AMM with real-time quotes
+3. **Slippage Settings** — Configurable slippage tolerance (0.1%, 0.5%, 1.0%)
+4. **Price Impact Display** — Color-coded price impact warnings (green/red)
+5. **Minimum Received** — Calculated minimum output based on slippage
+6. **Token Selection Dropdown** — Switch between XLM, USDC, BTC, ETH with one click
+7. **Concentrated Liquidity** — Add liquidity within specific tick ranges
+8. **Position Management** — View and manage existing LP positions
+9. **TVL & Fee Dashboard** — Total Value Locked and fees earned at a glance
+10. **Lending Dashboard** — Supply APY, Borrow APY, and utilization rates
+11. **Supply/Borrow Tabs** — Toggle between supply and borrow interfaces
+12. **Health Factor Display** — Real-time health factor with infinity for no borrows
+13. **Collateral Warning** — Visual alerts for collateral factor and liquidation thresholds
+14. **Responsive Design** — Mobile-first layout with desktop navigation
+15. **Dark Theme** — Custom dark UI with Stellar brand colors and glow effects
+
+---
+
+## Screenshots
+
+> **Note**: Screenshots are conceptual. Run `npm run dev` to see the live application.
+
+### Swap Page
+- Two-sided token input with dropdown selection
+- Real-time quote with price impact and fee display
+- Slippage settings panel
+- Pool information card
+
+### Liquidity Page
+- TVL, fees earned, and position count stats
+- Position cards with token pair, fee tier, and value
+- Add liquidity form with token pair, amounts, and tick range
+
+### Lending Page
+- Rate cards showing Supply APY, Borrow APY, and Utilization
+- Supply panel with asset selection and amount input
+- Borrow panel with collateral and borrow amount fields
+- Health factor and interest tracking
+
+---
+
+## Tech Stack
+
+| Layer | Technology | Version | Purpose |
+|-------|-----------|---------|---------|
+| UI Framework | React | 18.2.0 | Component-based UI |
+| Build Tool | Vite | 5.0.11 | Fast development and production builds |
+| Language | TypeScript | 5.3.3 | Type-safe JavaScript |
+| Routing | React Router | 6.21.1 | Client-side SPA routing |
+| Styling | Tailwind CSS | 3.4.1 | Utility-first CSS framework |
+| CSS Processing | PostCSS | 8.4.33 | CSS transformation pipeline |
+| Autoprefixer | autoprefixer | 10.4.16 | CSS vendor prefixing |
+| Wallet | @stellar/freighter-api | 3.0.0 | Freighter wallet browser extension API |
+| Stellar SDK | @stellar/stellar-sdk | 12.0.0 | Stellar network types and utilities |
+| Icons | lucide-react | 0.303.0 | Beautiful, consistent icon set |
+| Classnames | clsx | 2.1.0 | Conditional CSS class joining |
+| Plugin | @vitejs/plugin-react | 4.2.1 | Vite React support with Fast Refresh |
+| Linting | ESLint | 8.56.0 | Code quality enforcement |
+| Formatting | Prettier | 3.2.2 | Code formatting |
 
 ---
 
 ## Project Structure
 
 ```
-frontend/
-├── index.html                      # HTML entry point
-├── package.json
-├── vite.config.ts                  # Vite configuration + API proxy
-├── tailwind.config.js              # Tailwind theme + custom colors
-├── postcss.config.js               # PostCSS plugins
-├── tsconfig.json                   # TypeScript config
-├── tsconfig.node.json              # Vite/node TS config
-├── src/
-│   ├── main.tsx                    # React root mount
-│   ├── App.tsx                     # Router setup
-│   ├── index.css                   # Tailwind imports + custom styles
-│   ├── vite-env.d.ts               # Vite type definitions
-│   ├── pages/
-│   │   ├── Swap.tsx                # Token swap interface
-│   │   ├── Liquidity.tsx           # Liquidity pool management
-│   │   └── Lending.tsx             # Supply/borrow dashboard
-│   ├── components/
-│   │   ├── Header.tsx              # Navigation + wallet connect
-│   │   └── TokenInput.tsx          # Reusable token amount input
-│   ├── hooks/
-│   │   ├── useWallet.ts            # Freighter wallet hook
-│   │   ├── useSwapQuote.ts         # Swap quote fetching
-│   │   └── useLendingRates.ts      # Lending rates fetching
-│   └── services/
-│       └── api.ts                  # API client functions
-├── README.md
-├── CONTRIBUTING.md
-├── LICENSE
-└── .gitignore
+web3-suite-defi-frontend/
+├── index.html                              # HTML entry point (loads /src/main.tsx)
+├── package.json                            # Dependencies and scripts
+├── postcss.config.js                       # PostCSS config (Tailwind + Autoprefixer)
+├── tsconfig.json                           # TypeScript configuration
+├── vite.config.ts                          # Vite config with API proxy
+├── LICENSE                                 # MIT License
+│
+└── src/
+    ├── main.tsx                            # React root render with BrowserRouter
+    ├── App.tsx                             # Route definitions and layout
+    ├── index.css                           # Tailwind directives + custom components
+    ├── vite-env.d.ts                       # Vite client type definitions
+    │
+    ├── components/
+    │   ├── Header.tsx                      # Top nav bar with wallet connection
+    │   ├── Navbar.tsx                      # Navigation component (alternative)
+    │   ├── WalletButton.tsx                # Wallet connect/disconnect button
+    │   └── TokenInput.tsx                  # Reusable token amount input with dropdown
+    │
+    ├── pages/
+    │   ├── Swap.tsx                        # Token swap page (active)
+    │   ├── SwapPage.tsx                    # Token swap page (alternate)
+    │   ├── Liquidity.tsx                   # Liquidity pools page (active)
+    │   ├── LiquidityPage.tsx               # Liquidity pools page (alternate)
+    │   ├── Lending.tsx                     # Lending/borrowing page (active)
+    │   └── LendingPage.tsx                 # Lending/borrowing page (alternate)
+    │
+    ├── hooks/
+    │   ├── useSwapQuote.ts                 # Swap quote fetching with loading/error
+    │   ├── useLendingRates.ts              # Lending rates polling (30s interval)
+    │   └── useWallet.ts                    # Freighter wallet state management
+    │
+    └── services/
+        └── api.ts                          # HTTP client (apiGet, apiPost, swapApi, lendingApi)
 ```
 
 ---
 
-## Setup Instructions
+## Getting Started
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
-- npm or pnpm
-- Freighter browser extension (Chrome/Firefox/Brave)
+- **Node.js** >= 20.0.0
+- **npm** or **yarn**
+- **Freighter browser extension** (for wallet interaction)
+- **Backend API running** on `http://localhost:3001`
 
-### 1. Install Dependencies
+### Installation
 
 ```bash
-cd frontend/
+# Clone the repository
+git clone https://github.com/sudo-robi/web3-suite-defi-frontend.git
+cd web3-suite-defi-frontend
+
+# Install dependencies
 npm install
 ```
 
-### 2. Install Freighter
+### Configuration
 
-Install the Freighter browser extension from [freighter.app](https://freighter.app):
-
-- [Chrome Web Store](https://chrome.google.com/webstore/detail/freighter/)
-- [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/freighter/)
-- [Brave Web Store](https://chrome.google.com/webstore/detail/freighter/)
-
-### 3. Start Development Server
+1. Copy and configure environment:
 
 ```bash
-npm run dev
-# Frontend runs on http://localhost:5173
+# The default config proxies /api to localhost:3001
+# For production, set VITE_API_URL in .env
 ```
 
-The Vite dev server proxies `/api/*` requests to the backend at `http://localhost:3001`.
-
-### 4. Production Build
+2. Ensure the backend is running:
 
 ```bash
+# In the backend directory
+cd ../backend
+npm install && npm run dev
+```
+
+### Running
+
+```bash
+# Development server (port 5173)
+npm run dev
+
+# Open in browser
+open http://localhost:5173
+```
+
+The Vite dev server proxies `/api/*` requests to `http://localhost:3001` automatically.
+
+### Building
+
+```bash
+# Type check
+npm run typecheck
+
+# Production build
 npm run build
+
+# Preview production build
 npm run preview
+```
+
+Output goes to `dist/` directory.
+
+### Testing
+
+```bash
+# Lint
+npm run lint
+
+# Lint with auto-fix
+npm run lint:fix
+
+# Format code
+npm run format
+
+# Type check
+npm run typecheck
 ```
 
 ---
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `VITE_API_URL` | `""` (relative) | Backend API base URL |
+| Variable | Type | Default | Required | Description |
+|----------|------|---------|----------|-------------|
+| `VITE_API_URL` | `string` | `""` (empty) | No | Backend API base URL. Empty string uses Vite proxy in dev. |
 
----
+### Vite Proxy Configuration
 
-## Pages
-
-### Swap (`/swap`)
-
-Token swap interface with:
-
-- Token selection dropdown (XLM, USDC, BTC, ETH)
-- Amount input with real-time quote
-- Swap direction toggle (A→B / B→A)
-- Price impact and fee display
-- Slippage settings
-
-### Liquidity (`/liquidity`)
-
-Liquidity pool management:
-
-- Pool list with TVL and fee tiers
-- Add liquidity form (token pair, amounts, tick range)
-- Remove liquidity form
-- Position tracking with fee earnings
-
-### Lending (`/lending`)
-
-Lending/borrowing dashboard:
-
-- Supply APY, Borrow APY, Utilization rate cards
-- Supply panel — deposit assets, view position
-- Borrow panel — deposit collateral, borrow amount, health factor
-- Position overview — deposited, borrowed, interest, health
-
----
-
-## Components
-
-### Header
-
-Navigation bar with:
-
-- Logo and project name
-- Page navigation (Swap, Liquidity, Lending)
-- Wallet connect/disconnect button
-- Active page highlighting
-
-### TokenInput
-
-Reusable token amount input:
-
-- Numeric input with decimal support
-- Token selection dropdown
-- Balance display
-- Max button
-
----
-
-## Hooks
-
-### useWallet
+In development, Vite proxies API requests:
 
 ```typescript
-const { isConnected, address, network, isLoading, error, connect, disconnect, signTransaction } = useWallet();
+// vite.config.ts
+server: {
+  port: 5173,
+  proxy: {
+    "/api": {
+      target: "http://localhost:3001",
+      changeOrigin: true,
+    },
+  },
+},
 ```
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `isConnected` | `boolean` | Wallet connected state |
-| `address` | `string \| null` | Connected public key |
-| `network` | `string \| null` | Current network (TESTNET/MAINNET) |
-| `isLoading` | `boolean` | Connection in progress |
-| `error` | `string \| null` | Error message |
-| `connect` | `() => Promise<void>` | Connect wallet |
-| `disconnect` | `() => void` | Disconnect wallet |
-| `signTransaction` | `(xdr: string) => Promise<string \| null>` | Sign XDR |
+### Supported Tokens
 
-### useSwapQuote
+The frontend ships with these default token configurations:
 
-```typescript
-const { quote, isLoading, error, fetchQuote } = useSwapQuote();
-```
-
-### useLendingRates
-
-```typescript
-const { rates, isLoading, error, refetch } = useLendingRates();
-```
-
----
-
-## Styling
-
-### Custom Colors
-
-The theme extends Tailwind with Stellar-branded colors:
-
-```javascript
-colors: {
-  stellar: { 50-950 },  // Stellar blue palette
-  defi: {
-    green: "#00d4aa",   // Positive/success
-    red: "#ff4757",     // Negative/danger
-    yellow: "#ffc048",  // Warning
-    purple: "#a855f7",  // Accent
-  }
-}
-```
-
-### Component Classes
-
-Reusable utility classes defined in `index.css`:
-
-| Class | Description |
-|-------|-------------|
-| `.card` | Rounded card with border and blur |
-| `.btn-primary` | Primary action button |
-| `.btn-secondary` | Secondary action button |
-| `.input-field` | Form input field |
-| `.stat-label` | Small gray label |
-| `.stat-value` | Large mono value |
-| `.glow-green` | Green glow shadow |
-| `.glow-stellar` | Blue glow shadow |
+| Symbol | Name | Address |
+|--------|------|---------|
+| XLM | Stellar Lumens | `CAS3J7HYLGSEL2VK4LW25QW2YMOHQYDWGD6Y6QSEZ3OZCNR6ESY5CCCP` |
+| USDC | USD Coin | `CB6CH2QSS6FNEBNSNKRMZ2NC2RYQKQ3K5VMWQV4ZVD4YKPP3KQXSQAIS` |
+| BTC | Wrapped Bitcoin | `GBTG2POJVVSRBQSZVA3IYJEZJQLPTIVVYOYRLTZEAEFBM67E2UPHOJ7A` |
+| ETH | Wrapped Ether | `CAMMBLPKUOY5VTBLI7ELBXS54IS7VAZF4UO3UFE5LMTYQCDJELKRCRJ4` |
 
 ---
 
 ## Contributing
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+### Branch Naming
+
+| Type | Pattern | Example |
+|------|---------|---------|
+| Feature | `feat/<description>` | `feat/add-price-chart` |
+| Bug Fix | `fix/<description>` | `fix/wallet-disconnect-state` |
+| Refactor | `refactor/<description>` | `refactor/extract-token-config` |
+| Style | `style/<description>` | `style/improve-mobile-nav` |
+| Docs | `docs/<description>` | `docs/api-integration-guide` |
+
+### Commit Conventions
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+feat: add slippage settings panel to swap page
+fix: prevent wallet reconnection on page reload
+style: improve mobile responsive layout for lending page
+refactor: extract token list to shared config
+docs: add environment setup guide
+```
+
+### Code Style
+
+- **TypeScript strict mode** — No implicit `any`
+- **Functional components** — Use hooks, no class components
+- **Custom hooks** — Extract reusable logic into `hooks/`
+- **Tailwind utility classes** — Use existing design system components (`card`, `btn-primary`, `input-field`, etc.)
+- **No inline styles** — Use Tailwind classes or custom CSS in `index.css`
+- **Named exports** — Use `export function ComponentName()` pattern
+- **Props interfaces** — Define TypeScript interfaces for all component props
+- **Lucide icons** — Use `lucide-react` for all icons consistently
+
+### Design System
+
+Custom CSS classes available in `index.css`:
+
+| Class | Description |
+|-------|-------------|
+| `.card` | Rounded card with border, background, and padding |
+| `.btn-primary` | Stellar-blue primary action button |
+| `.btn-secondary` | Gray secondary action button |
+| `.input-field` | Text input with border, focus ring, and styling |
+| `.stat-label` | Small gray text for labels |
+| `.stat-value` | Mono font, large bold text for values |
+| `.glow-green` | Green glow shadow effect |
+| `.glow-stellar` | Stellar-blue glow shadow effect |
+
+### Pull Request Process
+
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Write tests for new components
-4. Ensure type safety: `npm run typecheck`
-5. Lint: `npm run lint`
-6. Format: `npm run format`
-7. Submit a pull request
-
-### Code Standards
-
-- Use functional components with hooks
-- All components must be TypeScript
-- Use Tailwind utility classes — no inline styles
-- Extract reusable logic into hooks
-- Keep components under 200 lines
-- Props must be typed with interfaces
+2. Create a feature branch from `main`
+3. Ensure `npm run typecheck` and `npm run lint` pass
+4. Test all pages manually in the browser
+5. Verify wallet connection works with Freighter
+6. Submit PR with screenshots of UI changes
 
 ---
 
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <sub>Built with React, Vite, Tailwind CSS & Stellar</sub>
+</p>
